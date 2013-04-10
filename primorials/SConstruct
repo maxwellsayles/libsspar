@@ -1,0 +1,28 @@
+from glob import glob
+import os
+
+primorial_sources = glob('*primorials.c')
+
+StaticLibrary('primorials.a',
+              source=primorial_sources,
+              CFLAGS=['-O3', '-Wall', '-Werror'],
+	      CPPPATH=['../..'])
+
+test_sources = ['test.c',
+               'libprimorials.a',
+                '../../liboptarith/liboptarith.a']
+test_libs = ['m']
+
+if os.path.isfile('/usr/local/lib/libgmp.a'):
+    test_sources.append('/usr/local/lib/libgmp.a')
+elif os.path.isfile('/usr/lib/libgmp.a'):
+    test_sources.append('/usr/lib/libgmp.a')
+else:
+    test_libs.append('gmp')
+
+Program(target='test',
+	source=test_sources,
+	LIBS=test_libs,
+	CCFLAGS=['-O3', '-Werror', '-Wall', '-DNDEBUG'],
+	CPPPATH=['../..'])
+
