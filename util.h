@@ -48,7 +48,7 @@ static inline int cprintf(const int level, const char* fmt, ...) {
 static inline uint64_t current_nanos(void) {
 #ifdef __linux__
   struct timespec res;
-  clock_gettime(CLOCK_MONOTONIC_RAW, &res);
+  clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &res);
   return (res.tv_sec * 1000000000ULL) + res.tv_nsec;
 #else
   struct timeval tv;
