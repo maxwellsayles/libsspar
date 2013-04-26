@@ -102,7 +102,7 @@ typedef struct {
   uint64_t primorial_time;  // Time spent exponentiating the primorial
 } sspar_t;
 
-#define SSPAR_MIN_PRIMORIAL_INDEX  4
+#define SSPAR_MIN_PRIMORIAL_INDEX  0
 #define SSPAR_MAX_PRIMORIAL_INDEX  512
 
 #define SSPAR_ADDITIONAL_QFORMS_AUTO (-1)
