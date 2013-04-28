@@ -24,7 +24,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 
 #include "liboptarith/closest_23.h"
 #include "liboptarith/group.h"
@@ -115,11 +114,6 @@ void sspar_init(sspar_t* this) {
     
   // Initialize the table for the search phase.
   hash_table_init(&this->table, TABLE_MAX_ENTRIES);
-    
-  // Statistical items.
-  this->total_time = 0;
-  this->search_time = 0;
-  this->primorial_time = 0;
 }
 
 /// Release SSPAR resources.
@@ -401,10 +395,8 @@ static int next_primeform(qform_group_t* qgroup,
  * Exponentiates this->init_form by primorial[this->primorial_index]
  */
 static inline void exponentiate_primorial(sspar_t* this) {
-  uint64_t primorial_time = current_nanos();
   group_pow_factored23(this->pow, this->initform, this->initform,
 		       this->primorial_terms, this->primorial_term_count);
-  this->primorial_time += current_nanos() - primorial_time;
 }
 
 /**
@@ -554,14 +546,11 @@ int sspar_factor_raw(sspar_t* this,
   int multiplier_index = 0;
   int prime_index = 0;
   unsigned int k = 1;
-  uint64_t start_time = 0;
-  uint64_t search_start_time = 0;
   int i = 0;
   int found_order = 0;
   int additional_qforms = determine_additional_qforms(N, additional_qforms_);
     
   cprintf(1, "Attempting to factor %Zd\n", N);
-  start_time = current_nanos();
   sspar_setup(this,
 	      primorial_index,
 	      step_bound,
@@ -569,9 +558,6 @@ int sspar_factor_raw(sspar_t* this,
 	      step_first_coprime,
 	      step_coprime_deltas);
     
-  this->total_time = 0;
-  this->search_time = 0;
-  this->primorial_time = 0;
   while (multiplier_index < square_free_count) {
     // Only use multipliers that are square-free and relatively prime to N.
     // Experiments showed that some multipliers work better than others
@@ -590,7 +576,6 @@ int sspar_factor_raw(sspar_t* this,
     if ((k > 1) && (mpz_cmp_ui(N, k) != 0) && mpz_divisible_ui_p(N, k)) {
       // k is a non-trivial divisor of n
       mpz_set_ui(d, k);
-      this->total_time = current_nanos() - start_time;
       return 1;
     }
 
@@ -634,9 +619,7 @@ int sspar_factor_raw(sspar_t* this,
     
     if (!found_order) {
       // Do a bounded primorial step search for the order.
-      search_start_time = current_nanos();
       found_order = sspar_search(this);
-      this->search_time += current_nanos() - search_start_time;
     }
 
     if (!found_order) {
@@ -656,7 +639,6 @@ int sspar_factor_raw(sspar_t* this,
 
     // Check if this leads to a factorization.
     if (test_ambiguous_form(this, d, N)) {
-      this->total_time = current_nanos() - start_time;
       return 1;
     }
 
@@ -672,7 +654,6 @@ int sspar_factor_raw(sspar_t* this,
 
       // Check if this leads to a factorization.
       if (test_ambiguous_form(this, d, N)) {
-	this->total_time = current_nanos() - start_time;
 	return 1;
       }
     }
@@ -689,7 +670,6 @@ int sspar_factor_raw(sspar_t* this,
   }
 
   // We failed to factor the integer.
-  this->total_time = current_nanos() - start_time;
   return 0;
 }
 
@@ -700,25 +680,32 @@ int sspar_factor_raw(sspar_t* this,
  * @return 1 if a non-trivial factor of N is found, 0 otherwise.
  */
 int sspar_factor(sspar_t* this, mpz_t d, const mpz_t N) {
-  // Indexes are for 16, 20, ..., 100 bit numbers.
+  // Indexes are for 16, 18, ..., 100 bit numbers.
   // These values were determined empirically
   // using sspar_search/search_range.
-  static const int primorial_indexes[22] = {
-    4, 4, 4, 4, 4, 6, 6, 8, 14, 15, 23, 34, 39,
-    55, 68, 90, 128, 148, 173, 250, 283, 401};
-  static const int steps_indexes[22] = {
-    11, 4, 4, 9, 14, 19, 23, 29, 29, 37, 33,
-    40, 40, 52, 47, 52, 60, 64, 64, 73, 82, 76};
-
+  static const int primorial_indexes[43] = {
+    2, 2, 2, 2, 2, 3, 4, 4,
+    4, 4, 6, 6, 6, 8, 8, 10,
+    14, 14, 18, 21, 23, 26, 34, 35,
+    39, 52, 53, 63, 68, 86, 90, 104,
+    109, 143, 148, 160, 173, 243, 247,
+    258, 283, 378, 411};
+  static const int steps_indexes[43] = {
+    11, 4, 4, 5, 5, 7, 9, 11, 14, 16, 19,
+    23, 23, 23, 29, 29, 29, 33, 33, 33, 33,
+    37, 40, 40, 40, 47, 47, 47, 50, 52, 52, 59,
+    60, 64, 64, 64, 64, 73, 73, 74, 77, 77, 85};
+  
   const size_t logn = mpz_sizeinbase(N, 2);
-  int i = ((logn + 3) >> 2) - 4;
+  int i = ((logn + 1) >> 1) - 8;
   i = max(i, 0);
-  i = min(i, 21);
-  assert (i >= 0 && i < 22);
+  i = min(i, 42);
+  assert(i >=0 && i < 43);
 
   const int primorial = primorial_indexes[i];
   const int steps = steps_indexes[i];
   const step_bound_t* bound = &step_bounds[steps];
+  //  printf("primorial=%d steps=%d\n", primorial, steps);
   return sspar_factor_raw(this, d, N, primorial,
 			  bound->bound,
 			  bound->step_count,

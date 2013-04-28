@@ -95,11 +95,6 @@ typedef struct {
 
   // Table used by search phase
   hash_table_t table;
-
-  // Statistical items
-  uint64_t total_time;      // Time to factor in microseconds
-  uint64_t search_time;     // Time spent in BSGS
-  uint64_t primorial_time;  // Time spent exponentiating the primorial
 } sspar_t;
 
 #define SSPAR_MIN_PRIMORIAL_INDEX  0
