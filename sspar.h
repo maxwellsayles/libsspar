@@ -105,12 +105,12 @@ typedef struct {
 /**
  * Initialize the SuperSPAR data structure.
  */
-void sspar_init(sspar_t* this);
+void sspar_init(sspar_t* sspar);
 
 /**
  * Release any memory used by the SuperSPAR data structure.
  */
-void sspar_clear(sspar_t* this);
+void sspar_clear(sspar_t* sspar);
 
 /**
  * Attempts to factor the integer N.
@@ -131,7 +131,7 @@ void sspar_clear(sspar_t* this);
  *                          of N.
  * @return 1 if a non-trivial factor of N is found, 0 otherwise.
  */
-int sspar_factor_raw(sspar_t* this,
+int sspar_factor_raw(sspar_t* sspar,
                      mpz_t d,
                      const mpz_t N,
                      const int primorial_index,
@@ -147,7 +147,7 @@ int sspar_factor_raw(sspar_t* this,
  * @param d A divisor of N.
  * @return 1 If a non-trivial factor of N is found, 0 otherwise.
  */
-int sspar_factor(sspar_t* this, mpz_t d, const mpz_t N);
+int sspar_factor(sspar_t* sspar, mpz_t d, const mpz_t N);
 
 #endif
 
