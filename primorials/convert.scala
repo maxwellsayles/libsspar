@@ -24,7 +24,7 @@ typedef struct {
 
 """
 
-if (args.length < 2) { 
+if (args.length < 3) {
   println("Usage: scala convert.scala <type> <infile> <outfile>")
   sys.exit(0)
 }
@@ -47,6 +47,10 @@ def convert(inFilename: String, outFilename: String) {
       case None => map
     }
   }
+  if (sizes.isEmpty) {
+    println("Input file \"%s\" is empty.".format(inFilename))
+    return
+  }
 
   val minSize = sizes.keys.min
   val maxSize = sizes.keys.max
@@ -64,5 +68,14 @@ def convert(inFilename: String, outFilename: String) {
   out.close()
 }
 
-convert(args(1), args(2))
+try {
+  if (args(1) == args(2)) {
+    println("Input and output file must be different.")
+    sys.exit(0)
+  }
+  convert(args(1), args(2))
+} catch {
+  case e: java.io.FileNotFoundException =>
+    println("File not found: " + e.getMessage)
+}
 
