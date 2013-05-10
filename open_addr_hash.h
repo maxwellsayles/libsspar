@@ -54,7 +54,8 @@ static inline void hash_table_reset(hash_table_t* hash, const int entries) {
 static inline void hash_table_init(hash_table_t* hash,
 				   const uint32_t max_entries) {
   hash->max_entries = ceil_pow2_u32(max_entries);
-  hash->tab = malloc(sizeof(htab_entry_t) * hash->max_entries);
+  hash->tab =
+    (htab_entry_t*)malloc(sizeof(htab_entry_t) * hash->max_entries);
 }
 
 /// Releases the resources held by the hash table.
